@@ -1,0 +1,15 @@
+[package]
+name = "north_derive"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+
+[dependencies]
+proc-macro2 = "0.4"
+quote = "0.6"
+
+[dependencies.syn]
+features = ["extra-traits", "full"]
+version = "0.14"
+
+[lib]
+proc-macro = true

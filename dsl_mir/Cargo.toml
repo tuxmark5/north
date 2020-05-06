@@ -1,0 +1,11 @@
+[package]
+name = "dsl_mir"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+interval_map = { path = "../interval_map" }
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }
+serde = "1.0.75"

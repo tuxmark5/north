@@ -1,0 +1,28 @@
+[package]
+name = "lang_evm"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dsl_mir = { path = "../dsl_mir" }
+fnv = "1.0"
+indexmap = "1.0"
+interval_map = { path = "../interval_map" }
+itertools = "0.7"
+lang_base = { path = "../lang_base" }
+lang_llvm_sys = { path = "../lang_llvm_sys" }
+lang_mir = { path = "../lang_mir" }
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }
+north_gen = { path = "../north_gen" }
+north_parser = { path = "../north_parser" }
+north_print = { path = "../north_print" }
+north_scope = { path = "../north_scope" }
+north_typesys = { path = "../north_typesys" }
+serde = "1.0"
+serde_derive = "1.0"
+
+[dependencies.scoped-tls]
+features = ["nightly"]
+version = "0.1"

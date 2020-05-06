@@ -1,0 +1,36 @@
+#! /usr/bin/fish
+
+set -x ARGS parse -g data/ansi_c.g -i data/input_gcc_470k.i -p
+set -x LD_LIBRARY_PATH /home/angel/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/lib 
+
+switch $argv[1]
+  case "cpu"
+    valgrind --tool=callgrind \
+      --callgrind-out-file=callgrind.out.0 \
+      --dump-instr=yes \
+      --collect-jumps=yes \
+      --simulate-cache=yes \
+      ./target/release/test $ARGS
+      
+  case "cpu_bench"
+    valgrind --tool=callgrind \
+      --callgrind-out-file=callgrind.out.bench \
+      --dump-instr=yes \
+      --collect-jumps=yes \
+      --simulate-cache=yes \
+      ./target/release/lang_evm-465ae0f663717557 --bench
+    
+  case "mem"
+    valgrind --tool=massif \
+      --massif-out-file=massif.out.0 \
+      ./target/release/test $ARGS
+    
+  case "leak"
+    valgrind --leak-check=full ./target/release/test
+    
+  case "normal"
+    ./target/release/test $ARGS
+
+  case default
+    echo "BAD MODE"
+end

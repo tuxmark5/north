@@ -1,0 +1,26 @@
+use {
+  crate::{
+    model::concept::Concept,
+  },
+  std::{
+    any::Any,
+    cell::RefCell,
+    rc::Rc,
+  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub trait Node: Any {
+  fn as_any(&self) -> &dyn Any;
+  fn as_any_mut(&mut self) -> &mut dyn Any;
+  fn concept() -> &'static dyn Concept where Self: Sized;
+  fn instance_concept(&self) -> &'static dyn Concept;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub type NodeCell<N> = Rc<RefCell<N>>;
+pub type NodeCellDyn = Rc<RefCell<dyn Node>>;
+
+////////////////////////////////////////////////////////////////////////////////////////////////

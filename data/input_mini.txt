@@ -1,0 +1,283 @@
+int foo() {
+  a && b && c && d;
+}
+
+####
+fn xxx() {
+  if a {} else {}
+  //yyy(&mut *ptr);
+}
+
+###
+
+fn main() {
+  if (x == 1 && x.y.z()) { }
+}
+
+###
+
+gc:
+incorp_reds:
+print_tree:
+trace_reds
+
+
+fn main() {
+  if let Some(current_as_str) = args[i].to_str() {
+    if (x != 1 && current_as_str.starts_with("metadata")) || current_as_str.starts_with("-Cmetadata") {
+      new = Some(format!("{}-{}", current_as_str, s));
+    }
+  }
+}
+
+###
+
+macy! {
+  // hello
+  // bello
+  q
+}
+
+####
+
+int foo() {
+  a /= z;
+}
+
+####
+
+
+### CLOSURE ERROR? ####
+
+(s*, x) after first s should return to *(s*, x)
+aka to the start.
+
+fork (call s; br match; match s), (dfa_without_s)
+
+problem:
+  after matching s, we get:
+    fork (call s; br match; match s), (dfa_without_s)
+  solutions:
+    * inline s, so it gets merged with dfa; 
+      * reduces would require extra infractrucure to work correctly
+        when inlined at non-origin positions
+    * greedy match s, so all whitespace is eaten before anything can happen
+    * token groups: always try to call "//" when calling "/";
+      * use op_div_div as comment start
+
+  & vs && may not always work due to context-dependency:
+    * & may not always appear with && and thus may not be merged
+  fixes:
+    * lookahead & rewind 1
+    * force start ops: when calling a single op, always expand all:
+      ! NEEDS ONLY SEMA ADJUSTMENT
+      * replace direct calls to abstract calls 
+      * leave match intact
+
+
+rec-dec:
+  * use greedy ops, top-down
+  - issue: requres a match failure to progress
+  - in case when no spaces are there, 1 match failure is needed
+  - in general, 1 match failure per each token. might be slow
+
+curr:
+  * ???
+  * s is merged with content; => FAST matching
+  * shift_p and dom_p are used to diambiguate
+  * only forks for the first s;
+  - greedy ops kill reduce-incorp
+
+open questions:
+  * greedy ops vs greedy calls
+  * is "greedy call" even a thing?
+
+optional left recursive s?:
+  + only a single s? call that gets merged
+
+
+
+####
+
+aaaaaaaaaa
+
+
+
+fn katz() {
+  (a.b)();
+}
+
+// hello world!
+// other comment
+{
+  use std::env;
+  use std::ffi::OsString;
+  use std::io;
+  use std::path::PathBuf;
+  use std::process::Command;
+  use std::str::FromStr;
+  use std::time::Instant;
+
+  crate fn hello() {
+    return 123;
+  }
+  /*return 5;*/
+  aaa+(bbb-ccc)+ddd; 
+  aaa+123;
+}
+
+###
+
+1 + 2 + 3 + 4 + 5
+
+int foo() {
+  a * b;
+  c * d;
+  e * f;
+  g * h;
+  i * j;
+}
+
+###
+
+int foo() {
+  a && b && c && d;
+}
+
+###
+
+int aaaa() {
+  a * b;
+  c * d;
+  e * f;
+  g * h;
+  i * j;
+}
+
+###
+
+typedef aaa bbb;
+typedef bbb ccc;
+typedef ccc ddd;
+{ return 10; }
+
+###
+
+int boop(void *(*) (long));
+
+###
+
+int aaaa() {
+  (a) * b;
+}
+
+###
+
+int qqqq() {
+  fun((a) & b, (c) & d, (e) & f, (g) & h, (i) & j); 
+}
+
+###
+
+typedef aaa bbb;
+typedef bbb ccc;
+typedef ccc ddd;
+{ return 10; }
+
+
+###
+
+# - + * & are all ambiguous
+(a) - b
+(a) + b
+(a) * b
+(a) & b
+
+###
+
+{
+  // expontential without RESUME trace
+  // solution 1: no direct use of (rule_dyn/expr) rules
+  //   create synthetic rule_dyn rules? - different precedence levels will mess this up
+  // solution 2: trace
+  // solution 3: ATTACH LABEL to SuspendedTask once it is resumed.
+  //   store some information inside suspendedtask
+  fun((a) & b, (c) & d, (e) & f); 
+}
+
+static void
+check_df (struct df *df)
+{
+  struct df_link *link;
+  rtx insn;
+  int regno;
+  unsigned int ui;
+  bitmap b = bitmap_initialize (xmalloc (sizeof (bitmap_head)), 1);
+  bitmap empty_defs = bitmap_initialize (xmalloc (sizeof (bitmap_head)), 1);
+  bitmap empty_uses = bitmap_initialize (xmalloc (sizeof (bitmap_head)), 1);
+  for (ui = 0; ui < df->def_id; ui++)
+    if (!df->defs[ui])
+      bitmap_set_bit (empty_defs, ui);
+  for (ui = 0; ui < df->use_id; ui++)
+    if (!df->uses[ui])
+      bitmap_set_bit (empty_uses, ui);
+  for (insn = get_insns (); insn; insn = (((insn)->u.fld[2]).rtx1))
+    if (((((enum rtx_code) (insn)->code) == INSN) || (((enum rtx_code) (insn)->code) == JUMP_INSN) || (((enum rtx_code) (insn)->code) == CALL_INSN)))
+      {
+ bitmap_clear (b);
+ for (link = ((df)->insns[(((insn)->u.fld[0]).rtint)].defs); link; link = link->next)
+   if (!link->ref || bitmap_bit_p (empty_defs, ((link->ref)->id))
+       || bitmap_bit_p (b, ((link->ref)->id)))
+     abort ();
+   else
+     bitmap_set_bit (b, ((link->ref)->id));
+ bitmap_clear (b);
+ for (link = ((df)->insns[(((insn)->u.fld[0]).rtint)].uses); link; link = link->next)
+   if (!link->ref || bitmap_bit_p (empty_uses, ((link->ref)->id))
+       || bitmap_bit_p (b, ((link->ref)->id)))
+     abort ();
+   else
+     bitmap_set_bit (b, ((link->ref)->id));
+      }
+  for (regno = 0; regno < max_reg_num (); regno++)
+    {
+      bitmap_clear (b);
+      for (link = df->regs[regno].defs; link; link = link->next)
+ if (!link->ref || bitmap_bit_p (empty_defs, ((link->ref)->id))
+     || bitmap_bit_p (b, ((link->ref)->id)))
+   abort ();
+ else
+   bitmap_set_bit (b, ((link->ref)->id));
+      bitmap_clear (b);
+      for (link = df->regs[regno].uses; link; link = link->next)
+ if (!link->ref || bitmap_bit_p (empty_uses, ((link->ref)->id))
+     || bitmap_bit_p (b, ((link->ref)->id)))
+   abort ();
+ else
+   bitmap_set_bit (b, ((link->ref)->id));
+    }
+  do { if (empty_uses) { bitmap_clear (empty_uses); free (empty_uses); (empty_uses) = 0; } } while (0);
+  do { if (empty_defs) { bitmap_clear (empty_defs); free (empty_defs); (empty_defs) = 0; } } while (0);
+  do { if (b) { bitmap_clear (b); free (b); (b) = 0; } } while (0);
+}
+
+void katz(type_x a) { }
+
+void batz(type_x a) { }
+
+###########
+
+int wer[123];
+
+void katz(type_a a[123], type_b ****z) {
+  return aaa;
+}
+
+{
+  crate fn hello() {
+    return 123;
+  }
+  return 5;
+  aaa+(bbb-ccc)+ddd; 
+  aaa+123;
+}

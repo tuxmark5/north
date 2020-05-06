@@ -1,0 +1,14 @@
+[package]
+name = "lang_mir"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+interval_map = { path = "../interval_map" }
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }
+north_gen = { path = "../north_gen" }
+north_print = { path = "../north_print" }
+num-traits = "0.2"
+serde = "1.0"

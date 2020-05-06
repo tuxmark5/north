@@ -1,0 +1,18 @@
+[package]
+name = "test"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+clap = "2"
+env_logger = "0.5"
+lang_base = { path = "../lang_base" }
+lang_evm = { path = "../lang_evm" }
+lang_llvm_sys = { path = "../lang_llvm_sys" }
+lang_mir = { path = "../lang_mir" }
+lang_mir_to_llvm = { path = "../lang_mir_to_llvm" }
+north_core = { path = "../north_core" }
+north_gen = { path = "../north_gen" }
+north_loader = { path = "../north_loader" }
+north_print = { path = "../north_print" }

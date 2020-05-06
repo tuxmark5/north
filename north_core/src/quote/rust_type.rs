@@ -1,0 +1,91 @@
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum Type {
+  Fn(TypeFn),
+  Newtype(TypeNewtype),
+  Prim(TypePrim),
+  Ptr(TypePtr),
+  Struct(TypeStruct),
+  Tuple(TypeTuple),
+  Unit,
+}
+
+impl Type {
+  pub fn make_struct(elements: Vec<TypeId>) -> Type {
+    Type::Struct(TypeStruct { elements })
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct TypeId(pub u32);
+
+impl From<usize> for TypeId {
+  fn from(idx: usize) -> Self {
+    TypeId(idx as u32)
+  }
+}
+
+impl From<TypeId> for usize {
+  fn from(idx: TypeId) -> usize {
+    idx.0 as usize
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct TypeFn {
+  pub params: Vec<TypeId>,
+  pub result: TypeId,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct TypeNewtype {
+  pub inner: TypeId,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub enum TypePrim {
+  Bool,
+  Char,
+  I8,
+  I16,
+  I32,
+  I64,
+  Str,
+  U8,
+  U16,
+  U32,
+  U64,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct TypePtr {
+  pub mutable: bool,
+  pub inner: TypeId,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct TypeStruct {
+  pub elements: Vec<TypeId>
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, Hash, PartialEq)]
+pub struct TypeTuple {
+  pub elements: Vec<TypeId>
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,390 @@
+use {
+  crate::{
+    ReduceId,
+    collections::{
+      IndexMap, LinkedList, linked_list::Entry,
+    },
+    pool::PBox,
+    runtime::{
+      Cursor, GrammarVec, MatchMap, PoolSet, 
+      SuspendEntry, SuspendedTask, 
+      Task, TaskBox, TaskData, TaskVec
+    },
+  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug)]
+pub struct Chart {
+  entries: IndexMap<ChartKey, ChartEntry>,
+  dirty_fail: Vec<u32>,
+  num_incomplete: usize,
+}
+
+impl Chart {
+  crate fn new() -> Self {
+    Self { 
+      entries: IndexMap::default(),
+      dirty_fail: Vec::new(),
+      dirty_resume: Vec::new(),
+      num_incomplete: 0,
+    }
+  }
+
+  crate fn add_child(&mut self, task: &mut PBox<dyn Task>) {
+    let data = task.data_mut();
+    let index = data.origin_idx as usize;
+    let entry = self.entries.get_index_mut(index).unwrap().1;
+
+    entry.num_children += 1;
+    // println!("ADD {:?}, num_cld={:?}, state={:?}", index, entry.num_children, data.state);
+    if entry.completed { 
+      self.num_incomplete += 1;
+      // println!("INCOMPLETE {:?}", index);
+    }
+  }
+
+  crate fn add_child_new(&mut self, task: &mut PBox<dyn Task>) {
+    let data = task.data_mut();
+    let key = ChartKey { pos: data.cursor.start };
+    let entry = self.entries.entry(key);
+    let index = entry.index();
+    let entry = entry.or_insert_with(<_>::default);
+
+    if data.origin_idx == std::u32::MAX {
+      data.origin_idx = index as u32;
+    } else {
+      panic!("BADS");
+    }
+
+    entry.num_children += 1;
+    // println!("ADD_NEW {:?}, num_cld={:?}, state={:?}", index, entry.num_children, data.state);
+    if entry.completed { 
+      self.num_incomplete += 1;
+      // println!("INCOMPLETE_NEW {:?}", index);
+    }
+  }
+
+  crate fn add_reduction(
+    &mut self, 
+    grammars: &mut GrammarVec, 
+    pool_set: &mut PoolSet, 
+    data: &TaskData, 
+    reduce_id: u16,
+    new_tasks: &mut TaskVec,
+  ) {
+    let index = data.origin_idx;
+    let (key, entry) = self.entries.get_index_mut(index as usize).unwrap();
+
+    // println!("  num_child: {:?}", entry.num_children);
+    // println!("  num_susps: {:?} + {:?}", entry.suspended_tasks.len(), entry.suspended_tasks_new.len());
+
+    let cur_end = data.cursor.start;
+    let size = cur_end.wrapping_offset_from(key.pos) as u32;
+    let reduction = Reduction { reduce_id, size };
+    entry.add_reduction(grammars, pool_set, reduction, new_tasks);
+  }
+
+  crate fn add_suspended(
+    &mut self, 
+    grammars: &mut GrammarVec, 
+    pool_set: &mut PoolSet, 
+    task: SuspendedTask,
+    new_tasks: &mut TaskVec,
+  ) {
+    let key = ChartKey { pos: task.position() };
+    let entry = self.entries.entry(key);
+    let index = entry.index() as u32;
+    let entry = entry.or_insert_with(<_>::default);
+
+    if !task.neg_spec.is_empty() && entry.mark_dirty_fail() {
+      self.dirty_fail.push(index);
+    }
+
+    entry.add_suspended(grammars, pool_set, task, new_tasks);
+  }
+
+  crate fn complete_task(
+    &mut self, 
+    grammars: &GrammarVec, 
+    pool_set: &mut PoolSet,
+    task: &mut TaskBox
+  ) -> Option<TaskBox> {
+    let data = task.data_mut();
+    let index = data.origin_idx as usize;
+    let entry = self.entries.get_index_mut(index).unwrap().1;
+
+    assert!(entry.num_children > 0);
+    entry.num_children -= 1;
+
+    // println!("COMPLETE_TASK AT {:?}, num_cld={:?}", index, entry.num_children);
+    if entry.num_children == 0 {
+      entry.completed = true;
+      // let new_task = entry.fail_task(grammars, pool_set);
+      // if new_task.is_some() { return new_task; }
+    }
+
+    None
+
+    // if entry.num_children == 0 && !entry.completed {
+    //   entry.completed = true;
+    //   let tasks = entry.suspended_tasks.len();
+    //   let mut cur = self.cursor_for(data);
+    //   cur.end = data.cursor.end;
+    //   println!("COMPLETING INDEX {:?} {:?} {:?}", index, cur, tasks);
+    // }
+  }
+
+  pub fn cursor_for(&self, data: &TaskData) -> Cursor {
+    let index = data.origin_idx as usize; 
+    let entry = self.entries.get_index(index);
+    let start = entry.unwrap().0.pos;
+    let end = data.cursor.start;
+    Cursor { start, end }
+  }
+
+  crate fn dump_info(&self) {
+    let mut max_reductions = 0;
+    let mut num_reductions = 0;
+    let mut red_capacity = 0;
+    let mut task_capacity = 0;
+
+    let entry_size = std::mem::size_of::<ChartEntry>();
+    let red_size = std::mem::size_of::<Reduction>();
+    let task_size = std::mem::size_of::<SuspendedTask>();
+
+    for (_, entry) in &self.entries {
+      let curr_num_reds = entry.reductions.len();
+      num_reductions += curr_num_reds;
+      max_reductions = std::cmp::max(max_reductions, curr_num_reds);
+    }
+
+    println!("CHART:");
+    println!("  total entries: {} * {} = {}", 
+      self.entries.len(), entry_size, self.entries.len() * entry_size);
+    println!("  max_reductions: {}", max_reductions);
+    //println!("  max_suspended: {}", MAX_SUSPENDED.with(|cell| cell.get()));
+    println!("  num_reductions: {}", num_reductions);
+    println!("  red_capacity: {} * {} = {}", 
+      red_capacity, red_size, red_capacity * red_size);
+    println!("  task_capacity: {} * {} = {}", 
+      task_capacity, task_size, task_capacity * task_size);
+    println!("  num_incomplete: {}", self.num_incomplete);
+  }
+
+  crate fn fail_task(
+    &mut self, 
+    grammars: &GrammarVec, 
+    pool_set: &mut PoolSet,
+  ) -> Option<PBox<dyn Task>> {
+
+    while let Some(index) = self.dirty_fail.pop() {
+      let (_, entry) = self.entries.get_index_mut(index as usize).unwrap();
+      let result = entry.fail_task(grammars, pool_set);
+      if result.is_some() { 
+        self.dirty_fail.push(index);
+        return result; 
+      } else {
+        entry.dirty_fail = false;
+      }
+    }
+
+    None
+  }
+
+  crate fn remove_child(&mut self, task: &mut PBox<dyn Task>) {
+    let data = task.data_mut();
+    let index = data.origin_idx as usize;
+    let entry = self.entries.get_index_mut(index).unwrap().1;
+
+    assert!(entry.num_children > 0);
+    entry.num_children -= 1;
+
+    // if entry.num_children == 0 && !entry.completed {
+    //   entry.completed = true;
+    //   let tasks = entry.suspended_tasks.len();
+    //   let mut cur = self.cursor_for(data);
+    //   cur.end = data.cursor.end;
+    //   println!("COMPLETING INDEX {:?} {:?} {:?}", index, cur, tasks);
+    // }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Default)]
+pub struct ChartEntry {
+  crate reductions: LinkedList<Reduction>,
+  crate suspended_tasks: LinkedList<SuspendedTask>,
+  crate dirty_fail: bool,
+  crate num_children: u16,
+  crate completed: bool,
+}
+
+impl ChartEntry {
+  crate fn add_reduction(
+    &mut self,
+    grammars: &mut GrammarVec, 
+    pool_set: &mut PoolSet,
+    reduction: Reduction,
+    new_tasks: &mut TaskVec
+  ) {
+    if self.reductions.contains(&reduction) { 
+      return;
+    }
+
+    for susp_task in &self.suspended_tasks {
+      Self::resume_task(grammars, pool_set, &reduction, susp_task, new_tasks);
+    }
+
+    self.reductions.push_front(pool_set, reduction);
+  }
+
+  crate fn add_suspended(
+    &mut self,
+    grammars: &mut GrammarVec, 
+    pool_set: &mut PoolSet,
+    susp_task: SuspendedTask,
+    new_tasks: &mut TaskVec
+  ) {
+    for reduction in &self.reductions {
+      Self::resume_task(grammars, pool_set, reduction, &susp_task, new_tasks);
+    }
+
+    self.suspended_tasks.push_front(pool_set, susp_task);
+  }
+
+  crate fn fail_task(
+    &mut self, 
+    grammars: &GrammarVec, 
+    pool_set: &mut PoolSet,
+    //complete: &mut TaskVec,
+  ) -> Option<PBox<dyn Task>> {
+    while let Some(mut entry) = self.suspended_tasks.pop_front_entry() {
+      let task = entry.get_mut();
+      let lang_id = task.lang_id();
+      let match_map = grammars.match_map(lang_id);
+
+      while let Some(e) = task.pop_neg_spec() {
+        if Self::test_suspend_entry(&self.reductions, match_map, e) { continue }
+        //println!("FAIL_SPEC {:?} => {:?}", ReduceId(e.reduce_id), e);
+        let new_task = task.task.clone(pool_set, e.state_id);
+        self.suspended_tasks.push_front_entry(entry);
+
+        return Some(new_task);
+      }
+
+      //let task = entry.unbox().into_value().task;
+      //complete.push(task);
+    }
+
+    None
+  }
+
+  crate fn mark_dirty_fail(&mut self) -> bool {
+    match self.dirty_fail {
+      true => { false },
+      false => { self.dirty_fail = true; true }
+    }
+  }
+
+  // crate fn mark_dirty_resume(&mut self) -> bool {
+  //   match self.dirty_resume {
+  //     true => { false },
+  //     false => { self.dirty_resume = true; true }
+  //   }
+  // }
+
+  crate fn resume_task(
+    grammars: &mut GrammarVec, 
+    pool_set: &mut PoolSet,
+    reduction: &Reduction,
+    susp_task: &SuspendedTask, 
+    new_tasks: &mut TaskVec
+  ) {
+    let lang_id = susp_task.lang_id();
+    let grammar = grammars.get_mut(lang_id);
+    let reduce_id = reduction.reduce_id as u32;
+
+    for state_id in grammar.positive_matches(susp_task.pos_spec, reduce_id) {
+      let mut new_task = susp_task.task.clone(pool_set, *state_id);
+      let data = new_task.data_mut();
+      let start = data.cursor.start;
+      let size = reduction.size as usize;
+      data.cursor.start = start.wrapping_add(size);
+      new_tasks.push(new_task);
+    }
+  }
+
+  // crate fn resume_tasks(
+  //   &mut self, 
+  //   grammars: &mut GrammarVec, 
+  //   pool_set: &mut PoolSet, 
+  //   out_tasks: &mut TaskVec
+  // ) {
+  //   // old_tasks + new_reds
+  //   for task in &self.suspended_tasks {
+  //     Self::try_resume_task(grammars, pool_set, &self.reductions_new, task, out_tasks);
+  //   }
+
+  //   self.reductions.extend_front(&mut self.reductions_new);
+
+  //   // new_tasks + all_reds
+  //   for task in &self.suspended_tasks_new {
+  //     Self::try_resume_task(grammars, pool_set, &self.reductions, task, out_tasks);
+  //   }
+
+  //   self.dirty_resume = false;
+  //   self.suspended_tasks.extend_front(&mut self.suspended_tasks_new);
+  // }
+
+  crate fn test_suspend_entry<'a, I: IntoIterator<Item=&'a Reduction>>(
+    reductions: I, 
+    match_map: &MatchMap, 
+    entry: &SuspendEntry
+  ) -> bool {
+    let range = entry.prec_range();
+    reductions.into_iter()
+      .filter(|r| match_map.matches(entry.reduce_id, r.reduce_id, range.clone()))
+      .next().is_some()
+  }
+
+  crate fn try_resume_task(
+    grammars: &mut GrammarVec, 
+    pool_set: &mut PoolSet,
+    reductions: &LinkedList<Reduction>,
+    task: &SuspendedTask, 
+    new_tasks: &mut TaskVec
+  ) {
+    let lang_id = task.lang_id();
+    let grammar = grammars.get_mut(lang_id);
+
+    for r in reductions {
+      for state_id in grammar.positive_matches(task.pos_spec, r.reduce_id as u32) {
+        let mut new_task = task.task.clone(pool_set, *state_id);
+        let data = new_task.data_mut();
+        let start = data.cursor.start;
+        data.cursor.start = start.wrapping_add(r.size as usize);
+        new_tasks.push(new_task);
+      }
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct ChartKey {
+  crate pos: *const u8,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Reduction {
+  crate reduce_id: u16, // u32
+  crate size: u32,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////

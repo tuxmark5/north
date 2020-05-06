@@ -1,0 +1,26 @@
+[workspace]
+members = [
+  "dsl_mir",
+  "evm_parser",
+  "interval_map",
+  "lang_base",
+  "lang_evm",
+  "lang_llvm_sys",
+  "lang_mir",
+  "lang_mir_to_llvm",
+  "lightning_sys",
+  "north_core",
+  "north_derive",
+  "north_gen",
+  "north_lexer",
+  "north_loader",
+  "north_parser",
+  "north_print",
+  "north_scope",
+  "north_typesys",
+  "test",
+]
+
+[profile.release]
+debug = true
+panic = "abort"

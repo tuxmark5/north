@@ -1,0 +1,23 @@
+[package]
+name = "north_core"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+flame = "0.2"
+log = "0.4"
+north_derive = { path = "../north_derive" }
+stable_deref_trait = "1.0.0"
+
+[dependencies.futures-preview]
+features = ["nightly"]
+version = "0.3.0-alpha.18"
+
+[dependencies.pin-utils]
+version = "= 0.1.0-alpha.4"
+
+[dependencies.scoped-tls]
+features = ["nightly"]
+version = "0.1"
+

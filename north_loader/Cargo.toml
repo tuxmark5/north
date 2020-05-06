@@ -1,0 +1,8 @@
+[package]
+name = "north_loader"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+
+[dependencies]
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }

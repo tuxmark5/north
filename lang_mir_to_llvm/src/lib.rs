@@ -1,0 +1,51 @@
+#![feature(associated_type_defaults)]
+#![feature(specialization)]
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+extern crate lang_llvm_sys;
+
+extern crate lang_mir;
+
+extern crate llvm_sys;
+#[macro_use]
+extern crate north_core;
+#[macro_use]
+extern crate north_gen;
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+mod reduce;
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+use {
+  north_core::model::Language,
+  reduce::{
+    reduce_block::ReduceBlockPart,
+    reduce_ctl::ReduceCtlPart,
+    reduce_mod::ReduceModPart,
+    reduce_type::ReduceTypePart,
+    reduce_value::ReduceValuePart,
+  },
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub struct LangMIRLLVM;
+
+impl Language for LangMIRLLVM {
+  fn name(&self) -> &str { "mir_to_llvm" }
+}
+
+language_parts! {
+  LangMIRLLVM {
+    ReduceBlockPart,
+    ReduceCtlPart,
+    ReduceModPart,
+    ReduceTypePart,
+    ReduceValuePart,
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////

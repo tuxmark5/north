@@ -1,0 +1,9 @@
+[package]
+name = "north_scope"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }

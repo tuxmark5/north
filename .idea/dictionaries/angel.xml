@@ -1,0 +1,23 @@
+<component name="ProjectDictionaryState">
+  <dictionary name="angel">
+    <words>
+      <w>alloca</w>
+      <w>codegen</w>
+      <w>constrs</w>
+      <w>deref</w>
+      <w>diag</w>
+      <w>diags</w>
+      <w>elems</w>
+      <w>exprs</w>
+      <w>lval</w>
+      <w>newtype</w>
+      <w>sema</w>
+      <w>serde</w>
+      <w>struct</w>
+      <w>subtrie</w>
+      <w>upcast</w>
+      <w>vals</w>
+      <w>vtable</w>
+    </words>
+  </dictionary>
+</component>

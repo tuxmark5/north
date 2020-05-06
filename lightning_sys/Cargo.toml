@@ -1,0 +1,13 @@
+[package]
+name = "lightning_sys"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+build = "liblightning/build.rs"
+edition = "2018"
+links = "lightning"
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+gcc = "0.3"

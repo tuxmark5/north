@@ -1,0 +1,9 @@
+[package]
+name = "north_parser"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+north_core = { path = "../north_core" }
+north_lexer = { path = "../north_lexer" }

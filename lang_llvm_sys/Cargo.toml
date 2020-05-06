@@ -1,0 +1,16 @@
+[package]
+name = "lang_llvm_sys"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dsl_mir = { path = "../dsl_mir" }
+indexmap = "1.0"
+interval_map = { path = "../interval_map" }
+libc = "0.2"
+llvm-sys = "60"
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }
+north_gen = { path = "../north_gen" }
+serde = "1.0"

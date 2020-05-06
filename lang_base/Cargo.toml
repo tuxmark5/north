@@ -1,0 +1,16 @@
+[package]
+name = "lang_base"
+version = "0.1.0"
+authors = ["Audrius <tuxmarkv@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+lang_mir = { path = "../lang_mir" }
+north_core = { path = "../north_core" }
+north_derive = { path = "../north_derive" }
+north_gen = { path = "../north_gen" }
+north_lexer = { path = "../north_lexer" }
+north_loader = { path = "../north_loader" }
+north_parser = { path = "../north_parser" }
+north_scope = { path = "../north_scope" }
+north_typesys = { path = "../north_typesys" }
