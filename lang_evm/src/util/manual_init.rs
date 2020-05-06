@@ -1,13 +1,12 @@
 use {
-  std::ptr
+  std::{mem::ManuallyDrop, ptr}
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[allow(unions_with_drop_fields)]
 pub union ManualInit<T> {
   empty: (),
-  value: T,
+  value: ManuallyDrop<T>,
 }
 
 impl<T> ManualInit<T> {
@@ -20,12 +19,12 @@ impl<T> ManualInit<T> {
   }
 
   pub unsafe fn init(&mut self, value: T) -> &mut T {
-    ptr::write(&mut self.value, value);
+    ptr::write(&mut *self.value, value);
     &mut self.value
   }
 
   pub unsafe fn take(&mut self) -> T {
-    ptr::read(&mut self.value)
+    ptr::read(&mut *self.value)
   }
 }
 

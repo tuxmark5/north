@@ -3,7 +3,7 @@ use {
     alloc::{Dealloc, ReverseAlloc},
   },
   std::{
-    alloc::{Alloc, AllocErr, Layout},
+    alloc::{AllocErr, AllocInit, AllocRef, Layout, MemoryBlock},
     marker::{PhantomData},
     pin::Pin,
     ptr::{NonNull},
@@ -18,11 +18,11 @@ const BLOCK_MASK: usize = !(BLOCK_ALIGN - 1);
 const BLOCK_SIZE: usize = 4096 * 8;
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub struct Block<A: Alloc> {
+pub struct Block<A: AllocRef> {
   crate pool_ptr: Option<NonNull<FreeList<A>>>,
 }
 
-impl<A: Alloc> Block<A> {
+impl<A: AllocRef> Block<A> {
   crate unsafe fn get<'a, T: ?Sized>(ptr: NonNull<T>) -> &'a mut Self {
     let ptr = ptr.as_ptr() as *mut u8 as usize;
     let block = (ptr & BLOCK_MASK) as *mut Self;
@@ -95,14 +95,14 @@ impl Entry {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub struct FreeList<A: Alloc> { // should be immovable
+pub struct FreeList<A: AllocRef> { // should be immovable
   blocks: Vec<NonNull<u8>>, // linked list
   entries: Entry,
   layout: Layout,
   parent_alloc: A,
 }
 
-impl<A: Alloc> FreeList<A> {
+impl<A: AllocRef> FreeList<A> {
   pub fn new(elem_size: usize, parent_alloc: A) -> Pin<Box<Self>> {
     unsafe {
       Pin::new_unchecked(box Self { 
@@ -117,7 +117,9 @@ impl<A: Alloc> FreeList<A> {
   #[inline(never)]
   pub fn alloc_block(&mut self) {
     let layout = Layout::from_size_align(BLOCK_SIZE, BLOCK_ALIGN_ALLOC).unwrap();
-    let ptr = unsafe { self.parent_alloc.alloc(layout).unwrap() };
+    let ptr = unsafe { 
+      self.parent_alloc.alloc(layout, AllocInit::Uninitialized).unwrap().ptr
+    };
     //println!("PTR {:?}", ptr);
 
     let align = (ptr.as_ptr() as usize) & (BLOCK_ALIGN - 1);
@@ -140,11 +142,12 @@ impl<A: Alloc> FreeList<A> {
   }
 }
 
-unsafe impl<A: Alloc> Alloc for FreeList<A> {
+unsafe impl<A: AllocRef> AllocRef for FreeList<A> {
   #[inline]
-  unsafe fn alloc(&mut self, _layout: Layout) -> Result<NonNull<u8>, AllocErr> {
+  fn alloc(&mut self, _layout: Layout, _init: AllocInit) -> Result<MemoryBlock, AllocErr> {
     if self.entries.is_empty() { self.alloc_block(); }
-    Ok(self.entries.pop().unwrap())
+    let ptr = self.entries.pop().unwrap();
+    Ok(MemoryBlock { ptr, size: 0 })
   }
 
   unsafe fn dealloc(&mut self, ptr: NonNull<u8>, _layout: Layout) {
@@ -152,7 +155,7 @@ unsafe impl<A: Alloc> Alloc for FreeList<A> {
   }
 }
 
-impl<A: Alloc> Drop for FreeList<A> {
+impl<A: AllocRef> Drop for FreeList<A> {
   fn drop(&mut self) {
     let layout = Layout::from_size_align(BLOCK_SIZE, BLOCK_ALIGN_ALLOC).unwrap();
     for block in self.blocks.drain(..) {
@@ -163,15 +166,15 @@ impl<A: Alloc> Drop for FreeList<A> {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub struct FreeListDealloc<A: Alloc> { 
+pub struct FreeListDealloc<A: AllocRef> { 
   alloc_type: PhantomData<A>
 }
 
-impl<A: Alloc> Dealloc for FreeListDealloc<A> {
+impl<A: AllocRef> Dealloc for FreeListDealloc<A> {
   unsafe fn alloc_again(ptr: NonNull<u8>, layout: Layout) -> NonNull<u8> {
     let block = Block::<A>::get(ptr);
     let pool = block.pool();
-    pool.alloc(layout).unwrap()
+    pool.alloc(layout, AllocInit::Uninitialized).unwrap().ptr
   }
 
   unsafe fn dealloc(ptr: NonNull<u8>, layout: Layout) {
@@ -181,7 +184,7 @@ impl<A: Alloc> Dealloc for FreeListDealloc<A> {
   }
 }
 
-impl<A: Alloc> ReverseAlloc for FreeList<A> {
+impl<A: AllocRef> ReverseAlloc for FreeList<A> {
   type Dealloc = FreeListDealloc<A>;
 }
 

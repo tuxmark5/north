@@ -32,6 +32,8 @@ struct DefaultRule;
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 impl<N: Node + ?Sized> DeriveScope<N, Down> for DefaultRule {
+  default const RELATIVE: bool = false;
+  
   default fn derive_scope(&self, (mut ctx, _): Ctx<N>) -> ScopePtrOpt {
     ctx.parent_scope(Down)
   }

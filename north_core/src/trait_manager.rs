@@ -8,7 +8,8 @@ use {
     any::{Any, TypeId},
     collections::HashMap,
     marker::Unsize,
-    mem::{transmute_copy, uninitialized},
+    mem::{transmute_copy},
+    ptr,
     raw::{TraitObject},
   },
 };
@@ -44,8 +45,8 @@ impl TraitManager {
       interface_id: TypeId::of::<I>(),
     };
 
-    let object: &'static O = unsafe { uninitialized() };
-    let fat_object: &'static I = object;
+    let object: *const O = ptr::null();
+    let fat_object: *const I = object;
     let raw_object = unsafe { transmute_copy::<_, TraitObject>(&fat_object) };
     let vtable = raw_object.vtable;
 

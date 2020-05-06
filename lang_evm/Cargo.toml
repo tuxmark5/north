@@ -20,9 +20,6 @@ north_parser = { path = "../north_parser" }
 north_print = { path = "../north_print" }
 north_scope = { path = "../north_scope" }
 north_typesys = { path = "../north_typesys" }
+scoped-tls = "1"
 serde = "1.0"
 serde_derive = "1.0"
-
-[dependencies.scoped-tls]
-features = ["nightly"]
-version = "0.1"

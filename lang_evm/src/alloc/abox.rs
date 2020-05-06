@@ -3,7 +3,7 @@ use {
     alloc::{Dealloc, ReverseAlloc},
   },
   std::{
-    alloc::{Global, Layout},
+    alloc::{AllocInit, Global, Layout},
     fmt::{self, Debug},
     marker::{PhantomData},
     mem::{forget},
@@ -27,7 +27,10 @@ impl<T, A> ABox<T, A> where
   A: ReverseAlloc
 {
   pub fn new_in(value: T, alloc: &mut A) -> Self {
-    let mut ptr = alloc.alloc_one::<T>().unwrap();
+    let layout = Layout::new::<T>();
+    let init = AllocInit::Uninitialized;
+    let block = alloc.alloc(layout, init).unwrap();
+    let mut ptr = block.ptr.cast::<T>();
     unsafe { write(ptr.as_mut(), value); }
     Self { ptr, alloc_type: PhantomData }
   }
@@ -91,7 +94,9 @@ impl<T, A> ABox<[T], A> where
   pub fn from_vec_in(vec: &mut Vec<T>, alloc: &mut A) -> Self {
     unsafe {
       let size = vec.len();
-      let ptr = alloc.alloc_array::<T>(size).unwrap();
+      let layout = Layout::array::<T>(size).unwrap();
+      let block = alloc.alloc(layout, AllocInit::Uninitialized).unwrap();
+      let ptr = block.ptr.cast::<T>();
 
       ptr::copy_nonoverlapping(vec.as_ptr(), ptr.as_ptr(), size);
       vec.set_len(0);

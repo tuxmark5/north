@@ -7,20 +7,19 @@ use {
   std::{
     alloc::{Global},
     marker::{PhantomData},
-    mem::{uninitialized},
+    mem::{ManuallyDrop, uninitialized},
     ptr::{self, write},
   },
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[allow(unions_with_drop_fields)]
 pub union SmallMap<K, V, A = Global> where
   K: Eq, A: Default + ReverseAlloc
 {
   size: u32,
-  heap: InnerHeap<K, V, A>,
-  inline: InnerInline<K, V, A>,
+  heap: ManuallyDrop<InnerHeap<K, V, A>>,
+  inline: ManuallyDrop<InnerInline<K, V, A>>,
 }
 
 impl<K, V, A> SmallMap<K, V, A> where

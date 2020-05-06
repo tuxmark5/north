@@ -2,6 +2,7 @@ use {
   std::{
     mem,
     marker::Unsize,
+    ptr,
     raw::TraitObject,
   }
 };
@@ -13,7 +14,7 @@ pub fn extract_data<T: ?Sized>(fat_ptr: &T) -> *mut () {
   trait_object.data
 }
 
-pub fn extract_vtable<T: ?Sized>(fat_ptr: &T) -> *mut () {
+pub fn extract_vtable<T: ?Sized>(fat_ptr: *const T) -> *mut () {
   let trait_object = unsafe { mem::transmute_copy::<_, TraitObject>(&fat_ptr) };
   trait_object.vtable
 }
@@ -32,8 +33,8 @@ pub fn vtable_of<A, T>() -> *mut () where
   A: Unsize<T> + 'static,
   T: ?Sized + 'static
 {
-  let object: &'static A = unsafe { mem::uninitialized() };
-  let dyn_object: &'static T = object;
+  let object: *const A = ptr::null();
+  let dyn_object: *const T = object;
   extract_vtable(dyn_object)
 }
 

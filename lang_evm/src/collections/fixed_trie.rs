@@ -539,35 +539,35 @@ pub mod table_level {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[cfg(test)]
-mod test {
-  use super::{PointerTrie};
-  use ::test::{Bencher, black_box};
+// #[cfg(test)]
+// mod test {
+//   use super::{PointerTrie};
+//   use ::test::{Bencher, black_box};
 
-  #[bench]
-  fn bench_lookup(b: &mut Bencher) {
-    let mut trie = PointerTrie::<usize, u32>::new();
-    trie.get_mut_or(0x9999_9999_9999, || 4567);
-    trie.get_mut_or(0x1234567890, || 456);
+//   #[bench]
+//   fn bench_lookup(b: &mut Bencher) {
+//     let mut trie = PointerTrie::<usize, u32>::new();
+//     trie.get_mut_or(0x9999_9999_9999, || 4567);
+//     trie.get_mut_or(0x1234567890, || 456);
 
-    let trie = black_box(trie);
-    let key = black_box(0x1234567890);
-    b.iter(|| {
-      assert_eq!(trie.get(key), Some(&456));
-    })
-  }
+//     let trie = black_box(trie);
+//     let key = black_box(0x1234567890);
+//     b.iter(|| {
+//       assert_eq!(trie.get(key), Some(&456));
+//     })
+//   }
 
-  #[test]
-  fn test_lookup() {
-    let mut trie = PointerTrie::<usize, u32>::new();
+//   #[test]
+//   fn test_lookup() {
+//     let mut trie = PointerTrie::<usize, u32>::new();
 
-    trie.get_mut_or(123, || 456);
-    trie.get_mut_or(1234, || 4567);
+//     trie.get_mut_or(123, || 456);
+//     trie.get_mut_or(1234, || 4567);
 
-    assert_eq!(trie.get(123), Some(&456));
-    assert_eq!(trie.get(1234), Some(&4567));
-    assert_eq!(trie.get(777), None);
-  }
-}
+//     assert_eq!(trie.get(123), Some(&456));
+//     assert_eq!(trie.get(1234), Some(&4567));
+//     assert_eq!(trie.get(777), None);
+//   }
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

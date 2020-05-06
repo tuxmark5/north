@@ -6,7 +6,7 @@ authors = ["Audrius <tuxmarkv@gmail.com>"]
 [dependencies]
 lang_llvm_sys = { path = "../lang_llvm_sys" }
 lang_mir = { path = "../lang_mir" }
-llvm-sys = "60"
+llvm-sys = "90"
 north_core = { path = "../north_core" }
 north_derive = { path = "../north_derive" }
 north_gen = { path = "../north_gen" }

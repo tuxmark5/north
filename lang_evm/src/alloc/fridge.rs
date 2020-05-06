@@ -6,7 +6,7 @@ use {
     quote::{QuoteType, RustQuoter, rust_type::Type},
   },
   std::{
-    alloc::{Alloc, AllocErr, Layout},
+    alloc::{AllocErr, AllocInit, AllocRef, Layout, MemoryBlock},
     mem::{size_of},
     pin::Pin,
     ptr::{NonNull},
@@ -17,12 +17,12 @@ use {
 const WORD_SIZE: usize = size_of::<usize>();
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub struct Fridge<A: Alloc> {
+pub struct Fridge<A: AllocRef> {
   crate pools: Box<[Pin<Box<FreeList<A>>>]>,
 }
 
 impl<A> Fridge<A> where
-  A: Alloc + Clone
+  A: AllocRef + Clone
 {
   pub fn new(parent_alloc: A) -> Self {
     let mut pools = Vec::new();
@@ -45,11 +45,12 @@ impl<A> Fridge<A> where
   }
 }
 
-unsafe impl<A: Alloc> Alloc for Fridge<A> {
-  unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
+unsafe impl<A: AllocRef> AllocRef for Fridge<A> {
+  fn alloc(&mut self, layout: Layout, init: AllocInit) -> Result<MemoryBlock, AllocErr> {
     let pool_idx = layout.size() / WORD_SIZE;
-    let pool = self.pools[pool_idx].as_mut().get_unchecked_mut();
-    pool.alloc(layout)
+    let pool = self.pools[pool_idx].as_mut();
+    let pool = unsafe { pool.get_unchecked_mut() };
+    pool.alloc(layout, init)
   }
 
   unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
@@ -59,19 +60,19 @@ unsafe impl<A: Alloc> Alloc for Fridge<A> {
   }
 }
 
-impl<A: Alloc + Clone + Default> Default for Fridge<A> {
+impl<A: AllocRef + Clone + Default> Default for Fridge<A> {
   fn default() -> Self {
     Self::new(<_>::default())
   }
 }
 
-impl<A: 'static + Alloc> QuoteType for Fridge<A> {
+impl<A: 'static + AllocRef> QuoteType for Fridge<A> {
   fn quote(_q: &mut RustQuoter) -> Type {
     Type::Unit
   }
 }
 
-impl<A: Alloc> ReverseAlloc for Fridge<A> {
+impl<A: AllocRef> ReverseAlloc for Fridge<A> {
   type Dealloc = FreeListDealloc<A>;
 }
 

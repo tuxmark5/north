@@ -5,9 +5,12 @@ use {
   libc::{c_char, c_void},
   llvm_sys::{
     core,
+    error::{
+      LLVMErrorRef,
+      LLVMErrorSuccess,
+    },
     orc::{
       self,
-      LLVMOrcErrorCode,
       LLVMOrcJITStackRef
     },
     prelude::*,
@@ -66,7 +69,6 @@ impl JITEngine {
 
     //let object_file = LLVMCreateObjectFile(mem_buf);
 
-    let shared_module = orc::LLVMOrcMakeSharedModule(module);
     //let shared_module = mem::transmute(module);
 
     /*let mut func_name = ptr::null_mut();
@@ -81,7 +83,7 @@ impl JITEngine {
     let error = orc::LLVMOrcAddEagerlyCompiledIR(
       self.jit_stack, 
       &mut ret_handle, 
-      shared_module, 
+      module, 
       symbol_resolver, 
       symbol_resolver_ctx
     );
@@ -90,8 +92,6 @@ impl JITEngine {
     let error = orc::LLVMOrcAddObjectFile(
       self.jit_stack, &mut ret_handle, object_file, symbol_resolver, symbol_resolver_ctx
     );*/
-
-    orc::LLVMOrcDisposeSharedModuleRef(shared_module);
 
     Self::make_result((), error)
   }
@@ -110,11 +110,11 @@ impl JITEngine {
     }
   }
 
-  pub fn make_result<T>(value: T, error: LLVMOrcErrorCode) -> Result<T, ()> {
-    use self::LLVMOrcErrorCode::*;
-    match error {
-      LLVMOrcErrSuccess => Ok(value),
-      LLVMOrcErrGeneric => Err(())
+  pub fn make_result<T>(value: T, error: LLVMErrorRef) -> Result<T, ()> {
+    if error.is_null() {
+      Ok(value)
+    } else {
+      Err(())
     }
   }
 

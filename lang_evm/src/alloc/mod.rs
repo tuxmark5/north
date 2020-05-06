@@ -1,6 +1,6 @@
 use {
   std::{
-    alloc::{Alloc, Global, Layout},
+    alloc::{AllocRef, AllocInit, Global, Layout},
     ptr::{NonNull},
   },
 };
@@ -29,7 +29,7 @@ pub trait Dealloc {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub trait ReverseAlloc: Alloc {
+pub trait ReverseAlloc: AllocRef {
   type Dealloc: Dealloc;
 }
 
@@ -40,7 +40,7 @@ pub struct GlobalDealloc { }
 impl Dealloc for GlobalDealloc {
   unsafe fn alloc_again(_ptr: NonNull<u8>, layout: Layout) -> NonNull<u8> {
     let mut global = Global::default();
-    global.alloc(layout).unwrap()
+    global.alloc(layout, AllocInit::Uninitialized).unwrap().ptr
   }
 
   unsafe fn dealloc(ptr: NonNull<u8>, layout: Layout) {

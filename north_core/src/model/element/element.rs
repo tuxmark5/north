@@ -25,6 +25,10 @@ pub trait Element: 'static + Any + CastSelf + Debug {
 
 impl<A: 'static + Debug> Element for A {
   default fn as_debug(&self) -> &dyn Debug { self }
+  
+  default fn children(&self) -> Option<ChildIter> { None }
+  
+  default fn children_mut(&mut self) -> Option<ChildIterMut> { None }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

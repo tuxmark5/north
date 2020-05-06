@@ -3,7 +3,7 @@ use {
     alloc::ReverseAlloc,
   },
   std::{
-    alloc::{Alloc, AllocErr, Layout},
+    alloc::{AllocErr, AllocInit, AllocRef, Layout, MemoryBlock},
     cell::{RefCell},
     marker::PhantomData,
     mem::replace,
@@ -49,12 +49,12 @@ impl<A> ScopedAlloc<A> {
   }
 }
 
-unsafe impl<A> Alloc for ScopedAlloc<A> where
-  A: Alloc
+unsafe impl<A> AllocRef for ScopedAlloc<A> where
+  A: AllocRef
 {
-  unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
+  fn alloc(&mut self, layout: Layout, init: AllocInit) -> Result<MemoryBlock, AllocErr> {
     let alloc = Self::get_mut();
-    alloc.alloc(layout)
+    alloc.alloc(layout, init)
   }
 
   unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {

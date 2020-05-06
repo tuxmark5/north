@@ -18,7 +18,7 @@ use {
   },
   north_derive::reflect_fn,
   std::{
-    alloc::{Alloc, Global, Layout},
+    alloc::{AllocInit, AllocRef, Global, Layout},
     cell::{RefCell},
     cmp::max,
     rc::Rc,
@@ -200,7 +200,9 @@ impl TaskCtx {
       let layout = Layout::from_size_align_unchecked(size, align);
       let padding = layout.padding_needed_for(8);
       let layout = Layout::from_size_align_unchecked(size + padding, 8);
-      alloc.alloc(layout).unwrap().as_ptr()
+      let init = AllocInit::Uninitialized;
+      let block = alloc.alloc(layout, init).unwrap();
+      block.ptr.as_ptr()
     }
   }
 
